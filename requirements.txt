@@ -6,6 +6,7 @@ pdfminer.six
 python-docx
 python-pptx
 spacy
+en-core-web-sm
 requests
 pandas
 numpy
