@@ -1,24 +1,25 @@
-# src/ingestion/video_processor.py
-
 import os
 import tempfile
 import shutil
 import logging
+import imageio_ffmpeg as iioff
 import ffmpeg
 import cv2
 import pytesseract
 from .audio_extractor import transcribe_audio
 
+# 1) Apunto ffmpeg-python al binario de imageio-ffmpeg
+os.environ["FFMPEG_BINARY"] = iioff.get_ffmpeg_exe()
+
 def extract_audio_from_video(video_path: str) -> str:
     """
-    Extrae el audio del video y lo guarda en un archivo WAV temporal.
+    Extrae el audio del video y lo guarda en un WAV temporal.
     Retorna la ruta al archivo WAV.
     """
-    # Crea un archivo temporal que persiste tras cerrarse
     tmp_wav = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
 
     try:
-        # Capturamos stderr para depuración
+        # Quitamos quiet=True para que aparezcan posibles warnings
         ffmpeg.input(video_path) \
               .output(tmp_wav, ac=1, ar=16000, format="wav") \
               .overwrite_output() \
@@ -32,7 +33,7 @@ def extract_audio_from_video(video_path: str) -> str:
 
 def extract_frames_and_ocr(video_path: str, frame_interval: int = 5) -> str:
     """
-    Extrae cuadros del video a intervalos regulares y aplica OCR para extraer el texto.
+    Extrae cuadros del video a intervalos regulares y aplica OCR para extraer texto.
     """
     ocr_text = ""
     temp_dir = tempfile.mkdtemp()
@@ -58,14 +59,13 @@ def extract_frames_and_ocr(video_path: str, frame_interval: int = 5) -> str:
 
 def process_video(video_path: str) -> str:
     """
-    Procesa un video extrayendo el audio y transcribiéndolo con Whisper,
-    además de extraer el texto de cuadros (diapositivas) mediante OCR.
-    Combina ambos textos para que el LLM tenga mayor contexto.
+    Procesa un video extrayendo el audio (Whisper) y texto de cuadros (OCR),
+    combina ambos textos para darle contexto al LLM.
     """
     # 1) Extrae audio a WAV temporal
     audio_path = extract_audio_from_video(video_path)
 
-    # 2) Transcribe el audio; luego limpia el archivo temporal
+    # 2) Transcribe y limpia archivo
     try:
         transcript = transcribe_audio(audio_path)
     finally:
@@ -74,13 +74,9 @@ def process_video(video_path: str) -> str:
         except OSError:
             pass
 
-    # 3) Extrae texto de los cuadros del video
+    # 3) OCR de cuadros
     ocr_text = extract_frames_and_ocr(video_path, frame_interval=5)
 
     # 4) Combina y retorna
-    combined_text = (
-        transcript
-        + "\n\nTexto extraído de diapositivas:\n"
-        + ocr_text
-    )
-    return combined_text
+    return f"{transcript}\n\nTexto extraído de diapositivas:\n{ocr_text}"
+
