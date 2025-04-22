@@ -5,15 +5,26 @@ PyPDF2
 pdfminer.six
 python-docx
 python-pptx
+
+# NLP
 spacy==3.7.2
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz
+
+# Core
 requests
 pandas
-numpy
+numpy==1.26.4
 transformers
-groq 
+
+# Groq & LangChain
+groq
 langchain-groq
 langchain
+
+# Visión y OCR
 opencv-python-headless
-streamlit
 pytesseract
+
+# UI
+streamlit
+
