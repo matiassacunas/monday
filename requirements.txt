@@ -1,0 +1,15 @@
+git+https://github.com/openai/whisper.git
+flask
+ffmpeg-python
+PyPDF2
+pdfminer.six
+python-docx
+python-pptx
+spacy
+requests
+pandas
+numpy
+transformers
+groq 
+langchain-groq
+langchain

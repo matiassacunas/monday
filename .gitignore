@@ -1,0 +1,12 @@
+# Entorno virtual
+venv/
+__pycache__/
+*.py[cod]
+*.env
+
+# Datos y salidas
+data/uploads/
+data/processed/
+
+# Ajustes de VSCode
+.vscode/
