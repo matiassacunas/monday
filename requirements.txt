@@ -13,3 +13,6 @@ transformers
 groq 
 langchain-groq
 langchain
+opencv-python
+streamlit
+pytesseract
