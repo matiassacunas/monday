@@ -1,6 +1,7 @@
 git+https://github.com/openai/whisper.git
 flask
 ffmpeg-python
+imageio-ffmpeg
 PyPDF2
 pdfminer.six
 python-docx
