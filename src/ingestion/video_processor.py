@@ -1,15 +1,23 @@
+# src/ingestion/video_processor.py
+
 import os
 import tempfile
 import shutil
 import logging
+
 import imageio_ffmpeg as iioff
 import ffmpeg
 import cv2
 import pytesseract
+
 from .audio_extractor import transcribe_audio
 
-# 1) Apunto ffmpeg-python al binario de imageio-ffmpeg
-os.environ["FFMPEG_BINARY"] = iioff.get_ffmpeg_exe()
+# -----------------------------------------------------------------------------
+# Asegura que ffmpeg-python encuentre el ejecutable incluido en imageio-ffmpeg
+ffmpeg_exe = iioff.get_ffmpeg_exe()
+ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+# -----------------------------------------------------------------------------
 
 def extract_audio_from_video(video_path: str) -> str:
     """
@@ -19,7 +27,7 @@ def extract_audio_from_video(video_path: str) -> str:
     tmp_wav = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
 
     try:
-        # Quitamos quiet=True para que aparezcan posibles warnings
+        # Quitamos quiet=True para capturar stderr en los logs
         ffmpeg.input(video_path) \
               .output(tmp_wav, ac=1, ar=16000, format="wav") \
               .overwrite_output() \
@@ -65,7 +73,7 @@ def process_video(video_path: str) -> str:
     # 1) Extrae audio a WAV temporal
     audio_path = extract_audio_from_video(video_path)
 
-    # 2) Transcribe y limpia archivo
+    # 2) Transcribe el audio y luego elimina el archivo temporal
     try:
         transcript = transcribe_audio(audio_path)
     finally:
@@ -74,9 +82,15 @@ def process_video(video_path: str) -> str:
         except OSError:
             pass
 
-    # 3) OCR de cuadros
+    # 3) Extrae texto de los cuadros del video
     ocr_text = extract_frames_and_ocr(video_path, frame_interval=5)
 
     # 4) Combina y retorna
-    return f"{transcript}\n\nTexto extraído de diapositivas:\n{ocr_text}"
+    combined_text = (
+        transcript
+        + "\n\nTexto extraído de diapositivas:\n"
+        + ocr_text
+    )
+    return combined_text
+
 
